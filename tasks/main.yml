@@ -24,3 +24,9 @@
   tags:
     - setup-all
     - setup-ilmo
+
+- block:
+    - when: ilmo_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/add-superuser.yml"
+  tags:
+    - ilmo-add-superuser

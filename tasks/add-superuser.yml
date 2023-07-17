@@ -1,0 +1,37 @@
+---
+
+- name: Fail if playbook called incorrectly
+  ansible.builtin.fail:
+    msg: "The `username` variable needs to be provided to this playbook, via --extra-vars"
+  when: "username is not defined or username == '<username>'"
+
+- name: Fail if playbook called incorrectly
+  ansible.builtin.fail:
+    msg: "The `email` variable needs to be provided to this playbook, via --extra-vars"
+  when: "email is not defined or email == '<email>'"
+
+- name: Fail if playbook called incorrectly
+  ansible.builtin.fail:
+    msg: "The `password` variable needs to be provided to this playbook, via --extra-vars"
+  when: "password is not defined or password == '<password>'"
+
+- name: Ensure ilmo API is started
+  ansible.builtin.service:
+    name: "{{ ilmo_identifier }}"
+    state: started
+    daemon_reload: true
+  register: start_result
+
+- name: Wait a while, so that the ilmo instance can manage to start
+  ansible.builtin.pause:
+    seconds: 7
+  when: "start_result.changed"
+
+- name: Create superuser
+  ansible.builtin.command:
+    cmd: "{{ devture_systemd_docker_base_host_command_docker }} exec {{ ilmo_identifier }} bash -c 'export DJANGO_SUPERUSER_PASSWORD={{ password }} && ilmo-manage createsuperuser --noinput --username {{ username | quote }} --email {{ email | quote }}'"
+  register: ilmo_create_account_result
+  failed_when:
+    - '"Superuser created successfully" not in ilmo_create_account_result.stdout and "That username is already taken" not in ilmo_create_account_result.stderr'
+  changed_when:
+    - '"Superuser created successfully" in ilmo_create_account_result.stdout'
