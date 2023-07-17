@@ -1,0 +1,23 @@
+---
+
+- name: Check existence of ilmo systemd service
+  ansible.builtin.stat:
+    path: "{{ devture_systemd_docker_base_systemd_path }}/{{ ilmo_identifier }}.service"
+  register: ilmo_service_stat
+
+- when: ilmo_service_stat.stat.exists | bool
+  block:
+    - name: Ensure ilmo service is stopped
+      ansible.builtin.service:
+        name: "{{ ilmo_identifier }}"
+        state: stopped
+        daemon_reload: true
+    - name: Ensure ilmo service doesn't exist
+      ansible.builtin.file:
+        dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ ilmo_identifier }}.service"
+        state: absent
+
+    - name: Ensure ilmo base path is files deleted (make sure to delete node data)
+      ansible.builtin.file:
+        path: "{{ ilmo_base_path }}"
+        state: absent

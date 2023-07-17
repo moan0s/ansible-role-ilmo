@@ -1,0 +1,166 @@
+---
+
+ilmo_enabled: true
+ilmo_identifier: ilmo
+
+ilmo_hostname: ''
+ilmo_instance_name: ''
+
+ilmo_uid: ''
+ilmo_gid: ''
+
+# Put a strong secret below, generated with `pwgen -s 64 1` or in another way
+ilmo_secret: ''
+
+ilmo_base_path: "/{{ ilmo_identifier }}"
+ilmo_config_path: "{{ ilmo_base_path }}/config"
+ilmo_data_path: "{{ ilmo_base_path }}/data"
+ilmo_env_path: "{{ ilmo_config_path }}/env"
+
+ilmo_debug: False
+
+ilmo_systemd_required_services_list: ['docker.service']
+
+ilmo_version: 1.0.1
+
+ilmo_container_image: "{{ ilmo_container_image_registry_prefix }}moanos/ilmo:{{ ilmo_container_image_tag }}"
+ilmo_container_image_registry_prefix: docker.io/
+ilmo_container_image_tag: "{{ ilmo_version }}"
+ilmo_container_image_force_pull: "{{ ilmo_container_image.endswith(':latest') }}"
+
+ilmo_container_network: '{{ ilmo_identifier }}'
+
+# The port number in the container
+ilmo_container_http_port: 8345
+
+# Controls whether the ilmo container exposes its HTTP port (as defined by `ilmo_container_http_port`).
+#
+# Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:8731"), or empty string to not expose.
+ilmo_container_http_host_bind_port: ""
+
+# A list of additional container networks that the container would be connected to.
+# The role does not create these networks, so make sure they already exist.
+# Use this to expose this container to a reverse proxy, which runs in a different container network.
+ilmo_container_additional_networks: []
+
+ilmo_database_type: 'postgresql'
+ilmo_database_hostname: ''
+ilmo_database_port: 5432
+ilmo_database_name: ilmo
+ilmo_database_username: ilmo
+ilmo_database_password: ''
+# Use this to set the sslmode parameter of the SSL connection
+# By default, we expect a local container (without SSL), so attempting SSL connections is not necessary.
+ilmo_database_sslmode: disable
+
+
+# Configure the E-Mail address that ILMO will use to inform users, enable password resets and other activities
+# Not required but useful
+ilmo_smtp_host: ''
+ilmo_smtp_port: 587
+ilmo_smtp_username: ''
+ilmo_smtp_password: ''
+ilmo_smtp_from: ''
+ilmo_smtp_disclose_recipients: false
+
+# Additional environment variables to pass to the ilmo container.
+# You can use this to further influence the default configuration.
+#
+# Example:
+# ilmo_environment_variables_extension: |
+#   DEBUG=TRUE
+ilmo_environment_variables_extension: ''
+
+# ilmo_container_labels_traefik_enabled controls whether labels to assist a Traefik reverse-proxy will be attached to the container.
+# See `roles/custom/ilmo_ilmo/templates/labels.j2` for details.
+#
+# To inject your own other container labels, see `ilmo_container_labels_additional_labels`.
+ilmo_container_labels_traefik_enabled: false
+ilmo_container_labels_traefik_docker_network: ""
+ilmo_container_labels_traefik_entrypoints: web-secure
+ilmo_container_labels_traefik_priority: 0
+ilmo_container_labels_traefik_tls: "{{ ilmo_container_labels_traefik_entrypoints != 'web' }}"
+ilmo_container_labels_traefik_tls_certResolver: default  # noqa var-naming
+
+# Controls which additional headers to attach to all HTTP requests.
+# To add your own custom request headers, use `ilmo_container_labels_traefik_additional_response_headers_custom`
+ilmo_container_labels_traefik_additional_request_headers: "{{ ilmo_container_labels_traefik_additional_request_headers_auto | combine(ilmo_container_labels_traefik_additional_request_headers_custom) }}"
+ilmo_container_labels_traefik_additional_request_headers_auto: {}
+ilmo_container_labels_traefik_additional_request_headers_custom: {}
+
+
+# Controls which additional headers to attach to all HTTP responses.
+# To add your own custom response headers, use `ilmo_container_labels_traefik_additional_response_headers_custom`
+ilmo_container_labels_traefik_additional_response_headers: "{{ ilmo_container_labels_traefik_additional_response_headers_auto | combine(ilmo_container_labels_traefik_additional_response_headers_custom) }}"
+ilmo_container_labels_traefik_additional_response_headers_auto: |
+  {{
+    {}
+    | combine ({'X-XSS-Protection': ilmo_http_header_xss_protection} if ilmo_http_header_xss_protection else {})
+    | combine ({'X-Frame-Options': ilmo_http_header_frame_options} if ilmo_http_header_frame_options else {})
+    | combine ({'X-Content-Type-Options': ilmo_http_header_content_type_options} if ilmo_http_header_content_type_options else {})
+    | combine ({'Content-Security-Policy': ilmo_http_header_content_security_policy} if ilmo_http_header_content_security_policy else {})
+    | combine ({'Permission-Policy': ilmo_http_header_content_permission_policy} if ilmo_http_header_content_permission_policy else {})
+    | combine ({'Strict-Transport-Security': ilmo_http_header_strict_transport_security} if ilmo_http_header_strict_transport_security and ilmo_container_labels_traefik_tls else {})
+  }}
+ilmo_container_labels_traefik_additional_response_headers_custom: {}
+
+# Specifies the value of the `X-XSS-Protection` header
+# Stops pages from loading when they detect reflected cross-site scripting (XSS) attacks.
+#
+# Learn more about it is here:
+# - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection
+# - https://portswigger.net/web-security/cross-site-scripting/reflected
+ilmo_http_header_xss_protection: "1; mode=block"
+
+# Specifies the value of the `X-Frame-Options` header which controls whether framing can happen.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
+ilmo_http_header_frame_options: SAMEORIGIN
+
+# Specifies the value of the `X-Content-Type-Options` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
+ilmo_http_header_content_type_options: nosniff
+
+# Specifies the value of the `Content-Security-Policy` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+ilmo_http_header_content_security_policy: frame-ancestors 'self'
+
+# Specifies the value of the `Permission-Policy` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permission-Policy
+ilmo_http_header_content_permission_policy: "{{ 'interest-cohort=()' if ilmo_floc_optout_enabled else '' }}"
+
+# Specifies the value of the `Strict-Transport-Security` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+ilmo_http_header_strict_transport_security: "max-age=31536000; includeSubDomains{{ '; preload' if ilmo_hsts_preload_enabled else '' }}"
+
+# Controls whether to send a "Permissions-Policy interest-cohort=();" header along with all responses
+#
+# Learn more about what it is here:
+# - https://www.eff.org/deeplinks/2021/03/googles-floc-terrible-idea
+# - https://paramdeo.com/blog/opting-your-website-out-of-googles-floc-network
+# - https://amifloced.org/
+#
+# Of course, a better solution is to just stop using browsers (like Chrome), which participate in such tracking practices.
+# See: `ilmo_content_permission_policy`
+ilmo_floc_optout_enabled: true
+
+# Controls if HSTS preloading is enabled
+#
+# In its strongest and recommended form, the [HSTS policy](https://www.chromium.org/hsts) includes all subdomains, and
+# indicates a willingness to be "preloaded" into browsers:
+# `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+# For more information visit:
+# - https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
+# - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+# - https://hstspreload.org/#opt-in
+# See: `ilmo_http_header_strict_transport_security`
+ilmo_hsts_preload_enabled: false
+
+
+# ilmo_container_labels_additional_labels contains a multiline string with additional labels to add to the container label file.
+# See `roles/custom/collabora_online/templates/labels.j2` for details.
+#
+# Example:
+# ilmo_container_labels_additional_labels: |
+#   my.label=1
+#   another.label="here"
+ilmo_container_labels_additional_labels: ''

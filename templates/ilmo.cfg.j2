@@ -1,0 +1,30 @@
+[ilmo]
+instance_name={{ ilmo_instance_name }}
+url={{ ilmo_hostname }}
+
+[django]
+secret={{ ilmo_secret }}
+debug={{ ilmo_debug }}
+
+[database]
+backend={{ ilmo_database_type }}
+host={{ ilmo_database_host }}
+name={{ ilmo_database_name }}
+user={{ ilmo_database_username }}
+password={{ ilmo_database_password }}
+
+[locations]
+static=/var/ilmo/static
+
+{% if ilmo_smtp_host %}
+[mail]
+console_only=False
+host={{ ilmo_smtp_host }}
+port={{ ilmo_smtp_port }}
+user={{ ilmo_smtp_username }}
+from={{ ilmo_smtp_from }}
+password={{ ilmo_smtp_password }}
+ssl = true
+{% endif %}
+
+{{ ilmo_environment_variables_extension }}

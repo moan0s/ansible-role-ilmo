@@ -1,0 +1,21 @@
+---
+
+- name: Fail if required ilmo settings not defined
+  ansible.builtin.fail:
+    msg: >-
+      You need to define a required configuration setting (`{{ item }}`) for using this role.
+  when: "vars[item] == ''"
+  with_items:
+    - ilmo_hostname
+    - ilmo_instance_name
+    - ilmo_secret
+
+- name: Fail when SMTP settings are missing (and SMTP is enabled by setting host)
+  ansible.builtin.fail:
+    msg: >-
+      You need to define a required configuration setting (`{{ item }}`) to correctly set up email via SMTP.
+  when: "ilmo_smtp_host !='' and vars[item] == ''"
+  with_items:
+    - ilmo_smtp_username
+    - ilmo_smtp_password
+    - ilmo_smtp_from

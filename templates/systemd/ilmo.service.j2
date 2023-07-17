@@ -1,0 +1,45 @@
+[Unit]
+Description=ILMO Library Management Tool ({{ ilmo_identifier }})
+{% for service in ilmo_systemd_required_services_list %}
+Requires={{ service }}
+After={{ service }}
+{% endfor %}
+DefaultDependencies=no
+
+[Service]
+Type=simple
+ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} kill {{ ilmo_identifier }} 2>/dev/null || true'
+ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ ilmo_identifier }} 2>/dev/null || true'
+
+ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
+                --rm \
+                --name={{ ilmo_identifier }} \
+                --log-driver=none \
+                --user={{ ilmo_uid }}:{{ ilmo_gid }} \
+                --cap-drop=ALL \
+                {% if ilmo_container_http_host_bind_port %}
+                -p {{ ilmo_container_http_host_bind_port }}:{{ ilmo_container_http_port }} \
+                {% endif %}
+                --label-file={{ ilmo_config_path }}/labels \
+                --network={{ ilmo_container_network }} \
+                --mount type=bind,src={{ ilmo_config_path }}/ilmo.cfg,dst=/etc/ilmo/ilmo.cfg,ro \
+                --mount type=bind,src={{ ilmo_data_path }},dst=/var/ilmo/static \
+                --tmpfs=/tmp:rw,noexec,nosuid,size=100m \
+                --read-only \
+                -e ILMO_CONFIG_FILE=/etc/ilmo/ilmo.cfg \
+                {{ ilmo_container_image }}
+
+{% for network in ilmo_container_additional_networks %}
+ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ ilmo_identifier }}
+{% endfor %}
+
+ExecStart={{ devture_systemd_docker_base_host_command_docker }} start --attach {{ ilmo_identifier }}
+
+ExecStop=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} kill {{ ilmo_identifier }} 2>/dev/null || true'
+ExecStop=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ ilmo_identifier }} 2>/dev/null || true'
+Restart=always
+RestartSec=30
+SyslogIdentifier={{ ilmo_identifier }}
+
+[Install]
+WantedBy=multi-user.target

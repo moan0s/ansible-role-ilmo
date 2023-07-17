@@ -1,0 +1,55 @@
+---
+
+- name: Ensure ilmo path exists
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: 0700
+    owner: "{{ ilmo_uid }}"
+    group: "{{ ilmo_gid }}"
+  with_items:
+    - {path: "{{ ilmo_base_path }}", when: true}
+    - {path: "{{ ilmo_config_path }}", when: true}
+
+- name: Ensure ilmo data path exists
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: 0755
+    owner: "{{ ilmo_uid }}"
+    group: "{{ ilmo_gid }}"
+  with_items:
+    - {path: "{{ ilmo_data_path }}", when: true}
+
+
+- name: Ensure ilmo traefik labels are installed
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/labels.j2"
+    dest: "{{ ilmo_config_path }}/labels"
+    owner: "{{ ilmo_uid }}"
+    group: "{{ ilmo_gid }}"
+    mode: 0640
+
+- name: Ensure ilmo configuration is deployed
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/ilmo.cfg.j2"
+    dest: "{{ ilmo_config_path }}/ilmo.cfg"
+    owner: "{{ ilmo_uid }}"
+    group: "{{ ilmo_gid }}"
+    mode: 0640
+
+- name: Ensure ilmo network is created in Docker
+  community.docker.docker_network:
+    name: "{{ ilmo_container_network }}"
+    driver: bridge
+
+- name: Ensure ilmo container image is pulled
+  community.docker.docker_image:
+    name: "{{ ilmo_container_image }}"
+    source: "{{ 'pull' if ansible_version.major > 2 or ansible_version.minor > 7 else omit }}"
+
+- name: Ensure ilmo.service installed
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/systemd/ilmo.service.j2"
+    dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ ilmo_identifier }}.service"
+    mode: 0644

@@ -1,0 +1,26 @@
+---
+
+- block:
+    - when: ilmo_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
+  tags:
+    - setup-all
+    - setup-ilmo
+    - install-all
+    - install-ilmo
+
+- block:
+    - when: ilmo_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
+  tags:
+    - setup-all
+    - setup-ilmo
+    - install-all
+    - install-ilmo
+
+- block:
+    - when: not ilmo_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
+  tags:
+    - setup-all
+    - setup-ilmo
