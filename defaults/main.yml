@@ -21,7 +21,7 @@ ilmo_debug: False
 
 ilmo_systemd_required_services_list: ['docker.service']
 
-ilmo_version: 1.0.1
+ilmo_version: 1.0.3
 
 ilmo_container_image: "{{ ilmo_container_image_registry_prefix }}moanos/ilmo:{{ ilmo_container_image_tag }}"
 ilmo_container_image_registry_prefix: docker.io/
