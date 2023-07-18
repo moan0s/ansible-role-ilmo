@@ -1,6 +1,6 @@
 [ilmo]
 instance_name={{ ilmo_instance_name }}
-url={{ ilmo_hostname }}
+host={{ ilmo_hostname }}
 
 [django]
 secret={{ ilmo_secret }}
@@ -14,7 +14,7 @@ user={{ ilmo_database_username }}
 password={{ ilmo_database_password }}
 
 [locations]
-static=/var/ilmo/static
+static=/ilmo/static
 
 {% if ilmo_smtp_host %}
 [mail]
