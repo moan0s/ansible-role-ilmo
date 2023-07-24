@@ -1,8 +1,8 @@
-# ILMO Ansible Role
+# 📚 [ILMO](https://github.com/moan0s/ILMO2/) Ansible Role
 
 ![Ilmo Logo](assets/logo.svg)
 
-ILMO is a self-hosted library management tool. This role helps you to set up ILMO:
+[ILMO](https://github.com/moan0s/ILMO2/)  is a self-hosted library management tool. This role helps you to set up ILMO:
 
 - with everything run in [Docker](https://www.docker.com/) containers
 - powered by [the official ilmo container image](https://hub.docker.com/r/moanos/ilmo/)
